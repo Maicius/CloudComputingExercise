@@ -1,10 +1,10 @@
 from pyspark import SparkConf
 from pyspark import SparkContext
-from pyspark.sql import SparkSession
-from pyspark.streaming import StreamingContext
-import time
+import datetime
 from jedis.jedis import jedis
 import json
+from constant.constant import UNIVERSITY_INFO
+import time
 
 class HDFSStreaming(object):
     def __init__(self):
@@ -14,23 +14,24 @@ class HDFSStreaming(object):
 
         self.redis = jedis()
 
-    def save_data_to_hdfs(self, data, file_name):
-
+    def save_data_to_hdfs(self, data, data_type):
+        timestamp = time.mktime(datetime.datetime.now().timetuple())
         rdd = self.sc.parallelize(data)
-        rdd = rdd.map(lambda x: x.replace("\'", "\""))
+        rdd = rdd.map(lambda x: json.loads(x.replace("\'", "\""))).map(lambda x: x['company_name'] + "==" + x['date'] + "==" + data_type)
         try:
-            rdd.saveAsTextFile(self.dataDirectory + file_name + ".txt")
+            rdd.saveAsTextFile(self.dataDirectory + str(timestamp) + ".txt")
         except BaseException as e:
             print(e)
-        print(file_name)
+        print(timestamp)
         time.sleep(1)
 
     def read_data_from_redis(self):
-        university_names = self.redis.get_university_list()
+        university_names = UNIVERSITY_INFO.keys()
         for name in  university_names:
-            data = self.redis.re.lrange(name, 0, -1)
-
-            self.save_data_to_hdfs(data, name)
+            table = name + "_company_info"
+            data = self.redis.re.lrange(table, 0, -1)
+            data_type = UNIVERSITY_INFO[name][1] + "==" + UNIVERSITY_INFO[name][3]
+            self.save_data_to_hdfs(data, data_type)
 
 
 if __name__ == '__main__':

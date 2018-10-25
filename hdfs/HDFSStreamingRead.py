@@ -8,7 +8,7 @@ class HDFSStreamingRead(object):
         # conf = SparkConf().setAppName("SparkStreamingSaving").setMaster("local[*]")
         self.session = SparkSession.builder.appName("SparkStreamingSaving").config("spark.master", "local[*]").getOrCreate()
         self.sc = self.session.sparkContext
-        self.streamContext = StreamingContext(self.sc, 2)
+        self.streamContext = StreamingContext(self.sc, 3)
         self.dataDirectory = "hdfs://localhost:9000/user/maicius/test_data/"
         self.outputDirectory = "/Users/maicius/code/ShowQQ/result/"
 
@@ -32,11 +32,19 @@ def getSparkSessionInstance(sparkConf):
 def process(time, rdd):
     print("========= %s =========" % str(time))
     spark = getSparkSessionInstance(rdd.context.getConf())
-    rowRdd = rdd.map(lambda w: Row(word=w))
-    data_df = spark.createDataFrame(rowRdd)
-    # rdd.pprint(20)
-    data_df.show()
-    print(rdd.collect())
+    size = len(rdd.collect())
+    print(size)
+    if size > 0:
+        rdd = rdd.map(lambda x: x.split("=="))
+        try:
+            rdd = rdd.filter(lambda x: len(x) == 4)
+            rowRdd = rdd.map(lambda x: Row(company=x[0], date=x[1], type=x[2], city=x[3]))
+            data_df = spark.createDataFrame(rowRdd)
+            data_df.show()
+        except BaseException as e:
+            print(e)
+            print(rdd.collect())
+
 
 if __name__ =="__main__":
     hdfs = HDFSStreamingRead()
