@@ -19,31 +19,46 @@ class HDFSStreamingRead(object):
     def analysis_data(self):
         data = self.streamContext.textFileStream(self.dataDirectory)
         data_rdds =  data.flatMap(lambda line: line.split(" "))
-        data_rdds.foreachRDD(process)
+        data_rdds.foreachRDD(self.process)
 
-def getSparkSessionInstance(sparkConf):
-    if ('sparkSessionSingletonInstance' not in globals()):
-        globals()['sparkSessionSingletonInstance'] = SparkSession\
-            .builder\
-            .config(conf=sparkConf)\
-            .getOrCreate()
-    return globals()['sparkSessionSingletonInstance']
+    def getSparkSessionInstance(self, sparkConf):
+        if ('sparkSessionSingletonInstance' not in globals()):
+            globals()['sparkSessionSingletonInstance'] = SparkSession \
+                .builder \
+                .config(conf=sparkConf) \
+                .getOrCreate()
+        return globals()['sparkSessionSingletonInstance']
 
-def process(time, rdd):
-    print("========= %s =========" % str(time))
-    spark = getSparkSessionInstance(rdd.context.getConf())
-    size = len(rdd.collect())
-    print(size)
-    if size > 0:
-        rdd = rdd.map(lambda x: x.split("=="))
-        try:
-            rdd = rdd.filter(lambda x: len(x) == 4)
-            rowRdd = rdd.map(lambda x: Row(company=x[0], date=x[1], type=x[2], city=x[3]))
-            data_df = spark.createDataFrame(rowRdd)
-            data_df.show()
-        except BaseException as e:
-            print(e)
-            print(rdd.collect())
+    def process_data_by_type(self, data, type):
+        # data.select('type').show()
+        data_type = data.filter(data['type'] == type)
+        print("筛选type:", type)
+        data_count = data_type.groupBy("date").count()
+        print(data_count.show())
+        return data_type
+
+    def process(self, time, rdd):
+        print("========= %s =========" % str(time))
+        spark = self.getSparkSessionInstance(rdd.context.getConf())
+        size = len(rdd.collect())
+        print(size)
+        if size > 0:
+            rdd = rdd.map(lambda x: x.split("=="))
+            try:
+
+                rdd = rdd.filter(lambda x: len(x) == 4)
+                print("数据清理...")
+                rowRdd = rdd.map(lambda x: Row(company=x[0], date=x[1], type=x[2], city=x[3]))
+                data_df = spark.createDataFrame(rowRdd)
+                data_c9 = self.process_data_by_type(data_df, "C9")
+                data_985 = self.process_data_by_type(data_df, "985")
+                data_211 = self.process_data_by_type(data_df, "211")
+                data_top = self.process_data_by_type(data_df, "一本")
+                data_sec = self.process_data_by_type(data_df, "二本")
+
+            except BaseException as e:
+                print(e)
+                print(rdd.collect())
 
 
 if __name__ =="__main__":
