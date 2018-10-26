@@ -11,7 +11,6 @@ class HDFSStreaming(object):
         conf = SparkConf().setAppName("SparkStreamingSaving").setMaster("local[*]")
         self.sc = SparkContext.getOrCreate(conf)
         self.dataDirectory = "hdfs://localhost:9000/user/maicius/test_data/"
-
         self.redis = jedis()
 
     def save_data_to_hdfs(self, data, data_type):

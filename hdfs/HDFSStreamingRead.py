@@ -11,6 +11,11 @@ class HDFSStreamingRead(object):
         self.streamContext = StreamingContext(self.sc, 3)
         self.dataDirectory = "hdfs://localhost:9000/user/maicius/test_data/"
         self.outputDirectory = "/Users/maicius/code/ShowQQ/result/"
+        self.data_all_985 = None
+        self.data_all_211 = None
+        self.data_all_top = None
+        self.data_all_c9 = None
+        self.data_all_basic = None
 
     def monitor_data(self):
         self.streamContext.start()
@@ -37,6 +42,9 @@ class HDFSStreamingRead(object):
         print(data_count.show())
         return data_type
 
+    def accumulate_data(self):
+        pass
+
     def process(self, time, rdd):
         print("========= %s =========" % str(time))
         spark = self.getSparkSessionInstance(rdd.context.getConf())
@@ -45,7 +53,6 @@ class HDFSStreamingRead(object):
         if size > 0:
             rdd = rdd.map(lambda x: x.split("=="))
             try:
-
                 rdd = rdd.filter(lambda x: len(x) == 4)
                 print("数据清理...")
                 rowRdd = rdd.map(lambda x: Row(company=x[0], date=x[1], type=x[2], city=x[3]))
@@ -55,7 +62,6 @@ class HDFSStreamingRead(object):
                 data_211 = self.process_data_by_type(data_df, "211")
                 data_top = self.process_data_by_type(data_df, "一本")
                 data_sec = self.process_data_by_type(data_df, "二本")
-
             except BaseException as e:
                 print(e)
                 print(rdd.collect())
