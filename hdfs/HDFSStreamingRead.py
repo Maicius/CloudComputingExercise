@@ -1,7 +1,10 @@
 from pyspark import SparkConf
 from pyspark import SparkContext
+from pyspark.sql.functions import udf
 from pyspark.streaming import StreamingContext
 from pyspark.sql import SparkSession, Row
+import pandas as pd
+from jedis.jedis import jedis
 import json
 class HDFSStreamingRead(object):
     def __init__(self):
@@ -16,6 +19,12 @@ class HDFSStreamingRead(object):
         self.data_all_top = None
         self.data_all_c9 = None
         self.data_all_basic = None
+        self.redis = jedis()
+        self.ALL_C9_DATA_TABLE = 'c9_company_date_number'
+        self.ALL_985_DATA_TABLE = '985_company_date_number'
+        self.ALL_211_DATA_TABLE = '211_company_date_number'
+        self.ALL_TOP_DATA_TABLE = 'TOP_company_date_number'
+        self.ALL_BASIC_DATA_TABLE = 'BASIC_company_date_number'
 
     def monitor_data(self):
         self.streamContext.start()
@@ -39,8 +48,10 @@ class HDFSStreamingRead(object):
         data_type = data.filter(data['type'] == type)
         print("筛选type:", type)
         data_count = data_type.groupBy("date").count()
-        print(data_count.show())
-        return data_type
+        data_count_df = data_count.toPandas()
+        # print(data_count_df)
+        # print(data_count_df.shape)
+        return data_count_df
 
     def accumulate_data(self):
         pass
@@ -48,9 +59,7 @@ class HDFSStreamingRead(object):
     def process(self, time, rdd):
         print("========= %s =========" % str(time))
         spark = self.getSparkSessionInstance(rdd.context.getConf())
-        size = len(rdd.collect())
-        print(size)
-        if size > 0:
+        if not rdd.isEmpty():
             rdd = rdd.map(lambda x: x.split("=="))
             try:
                 rdd = rdd.filter(lambda x: len(x) == 4)
@@ -62,10 +71,56 @@ class HDFSStreamingRead(object):
                 data_211 = self.process_data_by_type(data_df, "211")
                 data_top = self.process_data_by_type(data_df, "一本")
                 data_sec = self.process_data_by_type(data_df, "二本")
+                if self.data_all_985 is not None:
+                    self.data_all_985 = pd.concat([self.data_all_985, data_985], axis=0)
+                    print("all", self.data_all_985.shape)
+                    print(self.data_all_985)
+                else:
+                    self.data_all_985 = data_985
+                if self.data_all_c9 is not None:
+                    self.data_all_c9 = pd.concat([self.data_all_c9, data_c9], axis=0)
+                    print("all:", self.data_all_c9.shape)
+                else:
+                    self.data_all_c9 = data_c9
+                if self.data_all_211 is not None:
+                    self.data_all_211 = pd.concat([self.data_all_211, data_211], axis=0)
+                    print("211", self.data_all_211.shape)
+                else:
+                    self.data_all_211 = data_211
+
+                if self.data_all_top is not None:
+                    self.data_all_top = pd.concat([self.data_all_top, data_top], axis=0)
+                else:
+                    self.data_all_top = data_top
+
+                if self.data_all_basic is not None:
+                    self.data_all_basic = pd.concat([self.data_all_basic, data_sec], axis=0)
+                else:
+                    self.data_all_basic = data_sec
+
+                self.calculate_all_data()
+
             except BaseException as e:
                 print(e)
                 print(rdd.collect())
 
+    def calculate_all_data(self):
+        self.data_all_c9.groupby(['date']).sum()
+        self.data_all_985.groupby(['date']).sum()
+        self.data_all_211.groupby(['date']).sum()
+        self.data_all_basic.groupby(['date']).sum()
+        self.data_all_top.groupby(['date']).sum()
+        self.data_all_c9['type'] = 'c9'
+        self.data_all_985['type'] = '985'
+        self.data_all_211['211'] = '211'
+        self.data_all_top['top'] = '一本'
+        self.data_all_basic['basic'] = '二本'
+
+        self.redis.re.set(self.ALL_C9_DATA_TABLE, self.data_all_c9)
+        self.redis.re.set(self.ALL_985_DATA_TABLE, self.data_all_985)
+        self.redis.re.set(self.ALL_211_DATA_TABLE, self.data_all_211)
+        self.redis.re.set(self.ALL_TOP_DATA_TABLE, self.data_all_top)
+        self.redis.re.set(self.ALL_BASIC_DATA_TABLE, self.data_all_basic)
 
 if __name__ =="__main__":
     hdfs = HDFSStreamingRead()
