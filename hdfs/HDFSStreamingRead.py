@@ -20,12 +20,6 @@ class HDFSStreamingRead(object):
         self.data_all_top = None
         self.data_all_c9 = None
         self.data_all_basic = None
-        self.redis = jedis()
-        self.ALL_C9_DATA_TABLE = '../data/c9_company_date_number.csv'
-        self.ALL_985_DATA_TABLE = '../data/985_company_date_number.csv'
-        self.ALL_211_DATA_TABLE = '../data/211_company_date_number.csv'
-        self.ALL_TOP_DATA_TABLE = '../data/TOP_company_date_number.csv'
-        self.ALL_BASIC_DATA_TABLE = '../data/BASIC_company_date_number.csv'
 
     def monitor_data(self):
         self.streamContext.start()
