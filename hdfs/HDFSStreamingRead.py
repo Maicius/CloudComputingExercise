@@ -107,7 +107,8 @@ class HDFSStreamingRead(object):
 
     def calculate_for_each(self, data_df, type):
         if data_df.shape[0] != 0:
-            data_df.groupby(['date']).sum()
+            data_df['count'] = data_df['count'].astype(float)
+            data_df = data_df.groupby(['date']).mean().reset_index()
             date = data_df['date'].values
             date_time = list(map(lambda x: get_mktime(x), date))
             data_df['time_stamp'] = date_time
