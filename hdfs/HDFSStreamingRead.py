@@ -5,6 +5,7 @@ from pyspark.streaming import StreamingContext
 from pyspark.sql import SparkSession, Row
 import pandas as pd
 from jedis.jedis import jedis
+import time
 import json
 class HDFSStreamingRead(object):
     def __init__(self):
@@ -20,11 +21,11 @@ class HDFSStreamingRead(object):
         self.data_all_c9 = None
         self.data_all_basic = None
         self.redis = jedis()
-        self.ALL_C9_DATA_TABLE = 'c9_company_date_number'
-        self.ALL_985_DATA_TABLE = '985_company_date_number'
-        self.ALL_211_DATA_TABLE = '211_company_date_number'
-        self.ALL_TOP_DATA_TABLE = 'TOP_company_date_number'
-        self.ALL_BASIC_DATA_TABLE = 'BASIC_company_date_number'
+        self.ALL_C9_DATA_TABLE = '../data/c9_company_date_number.csv'
+        self.ALL_985_DATA_TABLE = '../data/985_company_date_number.csv'
+        self.ALL_211_DATA_TABLE = '../data/211_company_date_number.csv'
+        self.ALL_TOP_DATA_TABLE = '../data/TOP_company_date_number.csv'
+        self.ALL_BASIC_DATA_TABLE = '../data/BASIC_company_date_number.csv'
 
     def monitor_data(self):
         self.streamContext.start()
@@ -53,11 +54,9 @@ class HDFSStreamingRead(object):
         # print(data_count_df.shape)
         return data_count_df
 
-    def accumulate_data(self):
-        pass
-
     def process(self, time, rdd):
         print("========= %s =========" % str(time))
+        print(len(rdd.collect()))
         spark = self.getSparkSessionInstance(rdd.context.getConf())
         if not rdd.isEmpty():
             rdd = rdd.map(lambda x: x.split("=="))
@@ -71,6 +70,7 @@ class HDFSStreamingRead(object):
                 data_211 = self.process_data_by_type(data_df, "211")
                 data_top = self.process_data_by_type(data_df, "一本")
                 data_sec = self.process_data_by_type(data_df, "二本")
+
                 if self.data_all_985 is not None:
                     self.data_all_985 = pd.concat([self.data_all_985, data_985], axis=0)
                     print("all", self.data_all_985.shape)
@@ -105,22 +105,27 @@ class HDFSStreamingRead(object):
                 print(rdd.collect())
 
     def calculate_all_data(self):
-        self.data_all_c9.groupby(['date']).sum()
-        self.data_all_985.groupby(['date']).sum()
-        self.data_all_211.groupby(['date']).sum()
-        self.data_all_basic.groupby(['date']).sum()
-        self.data_all_top.groupby(['date']).sum()
-        self.data_all_c9['type'] = 'c9'
-        self.data_all_985['type'] = '985'
-        self.data_all_211['211'] = '211'
-        self.data_all_top['top'] = '一本'
-        self.data_all_basic['basic'] = '二本'
+        self.calculate_for_each(self.data_all_c9, 'c9')
+        self.calculate_for_each(self.data_all_985, '985')
+        self.calculate_for_each(self.data_all_211, '211')
+        self.calculate_for_each(self.data_all_top, 'top')
+        self.calculate_for_each(self.data_all_basic, 'basic')
 
-        self.redis.re.set(self.ALL_C9_DATA_TABLE, self.data_all_c9)
-        self.redis.re.set(self.ALL_985_DATA_TABLE, self.data_all_985)
-        self.redis.re.set(self.ALL_211_DATA_TABLE, self.data_all_211)
-        self.redis.re.set(self.ALL_TOP_DATA_TABLE, self.data_all_top)
-        self.redis.re.set(self.ALL_BASIC_DATA_TABLE, self.data_all_basic)
+    def calculate_for_each(self, data_df, type):
+        if data_df.shape[0] != 0:
+            data_df.groupby(['date']).sum()
+            date = data_df['date'].values
+            date_time = list(map(lambda x: get_mktime(x), date))
+            data_df['time_stamp'] = date_time
+            data_df.sort_values(by=['time_stamp'], inplace=True, ascending=True)
+            data_df['type'] = type
+            data_df.to_csv('../data/' + type + '_date_number.csv')
+
+
+# 将字符串时间转换为时间戳
+def get_mktime(date_string):
+    return time.mktime(time.strptime(date_string, '%Y-%m-%d'))
+
 
 if __name__ =="__main__":
     hdfs = HDFSStreamingRead()
