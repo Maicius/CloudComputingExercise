@@ -12,7 +12,7 @@ import redis
 # Create your views here.
 staus = ''
 clients = []
-
+import random
 
 def index(request):
     return render(request, 'index.html')
@@ -67,12 +67,14 @@ def echo(request):
 
 def sendNumber(request):
     # request.websocket.send(str(1111))
-    df = pd.read_csv('D:\\Git\\CloudComputingExercise\\demo\\cvs\\result.csv')
+
+    df = pd.read_csv('/Users/maicius/code/ShowQQ/data/result_json.csv')
     df.drop({'Unnamed: 0'}, axis=1, inplace=True)
     for i in range(len(df)):
         result = pd.DataFrame(df.iloc[i]).to_dict('dict')
         request.websocket.send(str(result[i]))  # 发送消息到客户端
-        time.sleep(2)
+        sleep_time = random.uniform(0.5, 1.5)
+        time.sleep(sleep_time)
 
 def getSource(request):
     # json.dumps(list)

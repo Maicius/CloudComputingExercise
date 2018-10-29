@@ -42,6 +42,11 @@ def open_file(filename):
 def calculate_all():
     data = open_file('../data/all_date.json')
     data_df = pd.DataFrame(data)
+    data_df['c9'] = round(data_df['c9'] / 9, 2)
+    data_df['985'] = round(data_df['p985'] / 20, 2)
+    data_df['211'] = round(data_df['p211'] / 17, 2)
+    data_df['top'] = round(data_df['top'] / 12, 2)
+    data_df['basic'] = round(data_df['basic'] / 12, 2)
     data_df.to_csv("../data/result_json.csv")
 
 def concat_df(first, second, type):
