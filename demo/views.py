@@ -3,14 +3,16 @@ from dwebsocket.decorators import accept_websocket,require_websocket
 from django.http import HttpResponse
 import time
 import json
+import pandas as pd
 from demo.dataSource import DataSource
 import random
 from django.shortcuts import render
 from django.http import JsonResponse
+import redis
 # Create your views here.
 staus = ''
 clients = []
-req = ''
+
 
 def index(request):
     return render(request, 'index.html')
@@ -54,9 +56,7 @@ def modify_message(message):
 def echo(request):
     if request.is_websocket():#判断是不是websocket连接
         for message in request.websocket:
-            # global req
-            # req = request
-            while 1:
+            # while 1:
                 sendNumber(request)
     else:
         try:#如果是普通的http方法
@@ -66,8 +66,13 @@ def echo(request):
             return render(request,'index.html')
 
 def sendNumber(request):
-    request.websocket.send(str(random.randint(0,5000)))  # 发送消息到客户端
-    time.sleep(1)
+    # request.websocket.send(str(1111))
+    df = pd.read_csv('D:\\Git\\CloudComputingExercise\\demo\\cvs\\result.csv')
+    df.drop({'Unnamed: 0'}, axis=1, inplace=True)
+    for i in range(len(df)):
+        result = pd.DataFrame(df.iloc[i]).to_dict('dict')
+        request.websocket.send(str(result[i]))  # 发送消息到客户端
+        time.sleep(2)
 
 def getSource(request):
     # json.dumps(list)
@@ -76,8 +81,6 @@ def getSource(request):
         print(request.POST)  # 查看客户端发来的请求内容
         return JsonResponse(request.POST,safe=False)  # 通过 django内置的Json格式 丢给客户端数据
 
-def getDataFrom(dataTime,number,type):
-    daSource = DataSource(dataTime,number,type)
 
 @require_websocket
 def echo_once(request):
