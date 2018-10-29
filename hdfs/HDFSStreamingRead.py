@@ -10,7 +10,8 @@ import json
 class HDFSStreamingRead(object):
     def __init__(self):
         # conf = SparkConf().setAppName("SparkStreamingSaving").setMaster("local[*]")
-        self.session = SparkSession.builder.appName("SparkStreamingSaving").config("spark.master", "local[*]").getOrCreate()
+        self.session = SparkSession.builder.appName("SparkStreamingSaving").\
+            config("spark.master", "local[*]").getOrCreate()
         self.sc = self.session.sparkContext
         self.streamContext = StreamingContext(self.sc, 3)
         self.dataDirectory = "hdfs://localhost:9000/user/maicius/test_data/"
@@ -105,6 +106,7 @@ class HDFSStreamingRead(object):
         self.calculate_for_each(self.data_all_top, 'top')
         self.calculate_for_each(self.data_all_basic, 'basic')
 
+
     def calculate_for_each(self, data_df, type):
         if data_df.shape[0] != 0:
             data_df['count'] = data_df['count'].astype(float)
@@ -115,6 +117,10 @@ class HDFSStreamingRead(object):
             data_df.sort_values(by=['time_stamp'], inplace=True, ascending=True)
             data_df['type'] = type
             data_df.to_csv('../data/' + type + '_date_number.csv')
+
+
+    def calculate_date_for_all(self, data):
+        pass
 
 
 # 将字符串时间转换为时间戳
