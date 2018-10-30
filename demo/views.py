@@ -39,6 +39,11 @@ def index2(request):
 def modify_message(message):
     return message.lower()
 
+def get_send_data():
+    df = pd.read_csv('/Users/maicius/code/ShowQQ/data/result_json.csv')
+    df.drop({'Unnamed: 0'}, axis=1, inplace=True)
+    result = pd.DataFrame(df.iloc[0]).to_dict('dict')
+    return result
 
 # @accept_websocket
 # def echo(request):
@@ -56,8 +61,7 @@ def modify_message(message):
 def echo(request):
     if request.is_websocket():#判断是不是websocket连接
         for message in request.websocket:
-            # while 1:
-                sendNumber(request)
+            sendNumber(request)
     else:
         try:#如果是普通的http方法
             message = request.GET['message']
@@ -66,19 +70,14 @@ def echo(request):
             return render(request,'index.html')
 
 def sendNumber(request):
-    # request.websocket.send(str(1111))
-
-    df = pd.read_csv('/Users/maicius/code/ShowQQ/data/result_json.csv')
-    df.drop({'Unnamed: 0'}, axis=1, inplace=True)
-    for i in range(len(df)):
-        result = pd.DataFrame(df.iloc[i]).to_dict('dict')
-        request.websocket.send(str(result[i]))  # 发送消息到客户端
-        sleep_time = random.uniform(0.5, 1.5)
-        time.sleep(sleep_time)
+    while(1):
+        data = get_send_data()
+        if len(data) > 0:
+            request.websocket.send(str(data))  # 发送消息到客户端
 
 def getSource(request):
     # json.dumps(list)
-    data = {'name': '你爹'}  # 返回给客户端的数据
+    data = {'name': 'test'}  # 返回给客户端的数据
     if request.method == "POST":
         print(request.POST)  # 查看客户端发来的请求内容
         return JsonResponse(request.POST,safe=False)  # 通过 django内置的Json格式 丢给客户端数据

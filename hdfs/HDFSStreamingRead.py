@@ -32,6 +32,11 @@ class HDFSStreamingRead(object):
         data_rdds.foreachRDD(self.process)
 
     def getSparkSessionInstance(self, sparkConf):
+        """
+        根据传入的sparkConf 获取全局唯一的SparkSession
+        :param sparkConf: spark 配置项
+        :return:
+        """
         if ('sparkSessionSingletonInstance' not in globals()):
             globals()['sparkSessionSingletonInstance'] = SparkSession \
                 .builder \
@@ -40,16 +45,25 @@ class HDFSStreamingRead(object):
         return globals()['sparkSessionSingletonInstance']
 
     def process_data_by_type(self, data, type):
-        # data.select('type').show()
+        """
+
+        :param data: Spark DataFrame
+        :param type: 需要筛选的数据类型
+        :return:
+        """
         data_type = data.filter(data['type'] == type)
         print("筛选type:", type)
         data_count = data_type.groupBy("date").count()
         data_count_df = data_count.toPandas()
-        # print(data_count_df)
-        # print(data_count_df.shape)
         return data_count_df
 
     def process(self, time, rdd):
+        """
+        计算rdd
+        :param time: 时间， key值
+        :param rdd: 当前time下的rdd
+        :return:
+        """
         print("========= %s =========" % str(time))
         print(len(rdd.collect()))
         spark = self.getSparkSessionInstance(rdd.context.getConf())
