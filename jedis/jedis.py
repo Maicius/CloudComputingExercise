@@ -79,27 +79,27 @@ class jedis(object):
     # 保存到文件
     def add_to_file(self, name):
         # for py3
-        with open('../../data/university_data/' + name + '.json', 'w', encoding='utf-8') as w:
+        with open('../../data/university_data/' + name + '.text', 'w', encoding='utf-8') as w:
             json.dump(self.data_array, w, ensure_ascii=False)
             # for py2
-            # with open('../data/' + name + '.json', 'w+') as w:
-            #     json.dump(self.data_array, w, ensure_ascii=False)
+            # with open('../data/' + name + '.text', 'w+') as w:
+            #     text.dump(self.data_array, w, ensure_ascii=False)
 
     def add_to_file_tail(self, name):
         # for py3
-        with open('../../data/university_data/' + name + '.json', 'w+', encoding='utf-8') as w:
+        with open('../../data/university_data/' + name + '.text', 'w+', encoding='utf-8') as w:
             json.dump(self.data_array, w, ensure_ascii=False)
             # for py2
-            # with open('../data/' + name + '.json', 'w+') as w:
-            #     json.dump(self.data_array, w, ensure_ascii=False)
+            # with open('../data/' + name + '.text', 'w+') as w:
+            #     text.dump(self.data_array, w, ensure_ascii=False)
 
     def add_to_file_local(self, name):
         # for py3
-        with open(name + '.json', 'w+', encoding='utf-8') as w:
+        with open(name + '.text', 'w+', encoding='utf-8') as w:
             json.dump(self.data_array, w, ensure_ascii=False)
             # for py2
-            # with open('../data/' + name + '.json', 'w+') as w:
-            #     json.dump(self.data_array, w, ensure_ascii=False)
+            # with open('../data/' + name + '.text', 'w+') as w:
+            #     text.dump(self.data_array, w, ensure_ascii=False)
 
     # 测试
     def test_add_to_file(self):
@@ -127,7 +127,7 @@ class jedis(object):
         msg = traceback.format_exc(e)
         print(msg)
         print("redis failed to connect, please check redis config")
-        print("now the data would to save into json file only")
+        print("now the data would to save into text file only")
 
 
 if __name__ == '__main__':

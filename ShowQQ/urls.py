@@ -22,6 +22,7 @@ urlpatterns = [
     url(r'^index/', v.index),
     url(r'^index2/', v.index2),
     url(r'^echo$', v.echo),
+    url(r'^echo_relationship$', v.echo_relationship),
     url(r'^echo_once', v.echo_once),
     url(r'^getSource', v.getSource),
 ]
