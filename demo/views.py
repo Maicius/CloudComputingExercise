@@ -110,5 +110,5 @@ def send_relation_message(request):
     # request.websocket.send(json.dumps(result[0]))
     for i in range(len(df)):
         result = pd.DataFrame(df.iloc[i]).to_dict('dict')
-        request.websocket.send(str(result[i]))  # 发送消息到客户端
+        request.websocket.send(json.dumps(result[i]))  # 发送消息到客户端
         time.sleep(2)
