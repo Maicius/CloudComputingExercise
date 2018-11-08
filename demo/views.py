@@ -112,7 +112,6 @@ def preprocess_data():
 
 
 def send_relation_message(request):
-
     data_df = preprocess_data()
     date_list = data_df['date'].values
 
@@ -128,3 +127,4 @@ def send_relation_message(request):
             print(json.dumps(send_list))
             request.websocket.send(json.dumps(send_list))  # 发送消息到客户端
             time.sleep(0.6)
+
