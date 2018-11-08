@@ -126,6 +126,6 @@ def send_relation_message(request):
                 send_list.append(send_data)
 
             print(send_list)
-            # request.websocket.send(json.dumps(send_list))  # 发送消息到客户端
-            # time.sleep(0.6)
+            request.websocket.send(json.dumps(send_list))  # 发送消息到客户端
+            time.sleep(1)
 
