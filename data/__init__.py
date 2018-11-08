@@ -16,10 +16,7 @@ def read_data_from_json():
         pd.concat([data_c9['name'], data_985['name'], data_211['name'], data_top['name'], data_basic['name']], axis=0))
     all_date_df = all_date_df.groupby(['name']).sum().reset_index()
     all_date_df['value'] = 0
-    # all_date_df['p985'] = 0
-    # all_date_df['p211'] = 0
-    # all_date_df['top'] = 0
-    # all_date_df['basic'] = 0
+
     concat_c9 = concat_df(deepcopy(all_date_df), deepcopy(data_c9), 'c9')
     concat_985 = concat_df(deepcopy(all_date_df), deepcopy(data_985), '985')
     concat_211 = concat_df(deepcopy(all_date_df), deepcopy(data_211), '211')

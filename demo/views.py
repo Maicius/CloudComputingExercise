@@ -69,7 +69,7 @@ def echo(request):
 
 def sendNumber(request):
     # request.websocket.send(str(1111))
-    df = pd.read_csv('D:\\Git\\CloudComputingExercise\\demo\\cvs\\resul.csv')
+    df = pd.read_csv('../data/result-relation.csv')
     df.drop({'Unnamed: 0'}, axis=1, inplace=True)
     for i in range(len(df)):
         result = pd.DataFrame(df.iloc[i]).to_dict('dict')
@@ -102,13 +102,29 @@ def echo_relationship(request):
         except:
             return render(request,'index.html')
 
+def preprocess_data():
+    # json_data = json.load('/Users/maicius/code/ShowQQ/data.json')
+    with open('/Users/maicius/code/ShowQQ/data.json', 'r', encoding='utf-8') as r:
+        data = json.load(r)
+    data_df = pd.DataFrame(data)
+    data_df = data_df.sort_values(by='date')
+    return data_df
+
+
 def send_relation_message(request):
-    df = pd.read_table('D:\\Git\\CloudComputingExercise\\demo\\text\\relationship.txt', sep=",", header=None,
-                       names=["source_name", "source_id", "target_name", "target_id"])
-    df.drop({'source_id', 'target_id'}, axis=1, inplace=True)
-    # result = pd.DataFrame(df.iloc[0]).to_dict('dict')
-    # request.websocket.send(json.dumps(result[0]))
-    for i in range(len(df)):
-        result = pd.DataFrame(df.iloc[i]).to_dict('dict')
-        request.websocket.send(str(result[i]))  # 发送消息到客户端
-        time.sleep(2)
+
+    data_df = preprocess_data()
+    date_list = data_df['date'].values
+
+    for date in date_list:
+        result = pd.DataFrame(data_df[data_df['date'] == date])
+        friend_df = pd.DataFrame(result['friend_list'].values[0])
+        if friend_df.shape != (0, 0):
+            friend_df.columns = ['source_name', 'source_id', 'target_name', 'target_id']
+            send_list = []
+            for item in friend_df.values:
+                send_data = dict(source_name=item[0], target_name=item[2])
+                send_list.append(send_data)
+            print(json.dumps(send_list))
+            request.websocket.send(json.dumps(send_list))  # 发送消息到客户端
+            time.sleep(0.6)
