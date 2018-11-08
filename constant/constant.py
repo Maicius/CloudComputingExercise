@@ -1,3 +1,5 @@
+import pandas as pd
+
 UNIVERSITY_INFO = {
     'scu': ['四川大学', '985', '四川', '成都'],
     'sufe': ['上海财经大学', '211', '上海', '上海'],
@@ -92,6 +94,9 @@ print('985:' + str(len(p985)))
 print('211:' + str(len(p211)))
 print('一本:' + str(len(top)))
 print('二本:' + str(len(basic)))
+
+
+data_df = pd.DataFrame(UNIVERSITY_INFO)
 
 COMPANY_WASTE_WORDS = ['控股', '股份', '有限公司', '有限', '公司', '集团', '（', '）', '资产管理', '通信', '集团股份',
                        '电子商务', '商城', '矿业集团', '信息产业', '发展股份', '控股集团', '(', ')',
